@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<block>
+  <name>sainlogic_decode</name>
+  <key>sainlogic_sainlogic_decode</key>
+  <category>[sainlogic]</category>
+  <import>import sainlogic</import>
+  <make>sainlogic.sainlogic_decode($fs, $threshold)</make>
+  <!-- Make one 'param' node for every Parameter you want settable from the GUI.
+       Sub-nodes:
+       * name
+       * key (makes the value accessible as $keyname, e.g. in the make node)
+       * type -->
+  <param>
+    <name>threshold</name>
+    <key>threshold</key>
+    <type>float</type>
+  </param>
+
+    <param>
+    <name>fs</name>
+    <key>fs</key>
+    <type>float</type>
+  </param>
+
+  <!-- Make one 'sink' node per input. Sub-nodes:
+       * name (an identifier for the GUI)
+       * type
+       * vlen
+       * optional (set to 1 for optional inputs) -->
+  <sink>
+    <name>in</name>
+    <type>float</type>
+  </sink>
+
+</block>
