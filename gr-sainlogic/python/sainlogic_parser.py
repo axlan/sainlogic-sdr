@@ -1,5 +1,6 @@
 
-crc8_tab = [
+# Taken from https://reveng.sourceforge.io/crc-catalogue/1-15.htm#crc.cat.crc-8-nrsc-5
+__CRC8_TAB = [
     0, 0x31, 0x62, 0x53, 0xC4, 0xF5, 0xA6, 0x97, 0xB9,
     0x88, 0xDB, 0xEA, 0x7D, 0x4C, 0x1F, 0x2E, 0x43, 0x72,
     0x21, 0x10, 0x87, 0xB6, 0xE5, 0xD4, 0xFA, 0xCB, 0x98,
@@ -31,8 +32,52 @@ crc8_tab = [
     0xFF, 0xCE, 0x9D, 0xAC
 ]
 
-def crc8(pkt):
+# CRC-8/NRSC-5 calculation
+def __crc8(pkt):
     crc = 0xFF
     for val in pkt:
-        crc = crc8_tab[crc ^ val]
+        crc = __CRC8_TAB[crc ^ val]
     return crc
+
+# Check the 15 byte message bytes match the 1 byte CRC
+def check_crc(msg):
+    return __crc8(msg[:-1]) == msg[-1]
+
+# Get the wind direction in degrees
+def get_direction(msg):
+    dir = msg[6]
+    if msg[3] & 0b100:
+        dir += 256
+    return dir
+
+# Get the temperature in degrees F
+def get_temperature(msg):
+    return ((msg[9] & 0b111) * 256 + msg[10]) / 10. - 40
+
+# Get average wind speed in m/s
+def get_avr_wind_speed(msg):
+    return msg[4] / 10.
+
+# Get gust wind speed in m/s
+def get_gust_wind_speed(msg):
+    return msg[5] / 10.
+
+# Get rain measurement in mm
+def get_rain(msg):
+    return (msg[7] * 256 + msg[8]) / 10.
+
+# Get humidity in %
+def get_humidity(msg):
+    return msg[11]
+
+# Get Dictionary of measurements or None if decode failure
+def get_measurements(msg):
+    if len(msg) != 16 or not check_crc(msg):
+        return None
+    return {
+            'temp': get_temperature(msg),
+            'humidity': get_humidity(msg),
+            'wind_dir': get_direction(msg),
+            'avr_wind': get_avr_wind_speed(msg),
+            'gust_wind': get_gust_wind_speed(msg)
+           }

@@ -22,14 +22,15 @@
 This is the GNU Radio SAINLOGIC module. Place your Python package
 description here (python/__init__.py).
 '''
+from __future__ import unicode_literals
 
 # import swig generated symbols into the sainlogic namespace
 try:
-	# this might fail if the module is python-only
-	from sainlogic_swig import *
+    # this might fail if the module is python-only
+    from .sainlogic_swig import *
 except ImportError:
-	pass
+    pass
 
 # import any pure python here
-from sainlogic_decode import sainlogic_decode
+from .sainlogic_decode import sainlogic_decode
 #
