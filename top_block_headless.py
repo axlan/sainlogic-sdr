@@ -69,7 +69,10 @@ def main(top_block_cls=top_block, options=None):
     tb = top_block_cls()
     tb.start()
     print('started')
-    time.sleep(65)
+    try:
+        time.sleep(600)
+    except:
+        pass
     print('stopping')
     tb.stop()
     print('stopped')

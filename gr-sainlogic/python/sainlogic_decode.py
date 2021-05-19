@@ -96,6 +96,39 @@ class sainlogic_decode(gr.sync_block):
         self.bits = []
         self.buffer = np.array([], dtype=bool)
 
+    @staticmethod
+    #deg
+    def get_direction(bytes_vals):
+        dir = bytes_vals[6]
+        if bytes_vals[3] & 0b100:
+            dir += 256
+        return dir
+
+    @staticmethod
+    #F
+    def get_temperature(bytes_vals):
+        return (bytes_vals[9] * 256 + bytes_vals[10] - 33168 ) / 10.
+
+    WIND_CONV_FACTOR = 0.224
+
+    @staticmethod
+    #MPH
+    def get_avr_wind(bytes_vals):
+        return bytes_vals[4] * 0.224
+
+    @staticmethod
+    #MPH
+    def get_gust_wind(bytes_vals):
+        return bytes_vals[5] * 0.224
+
+    @staticmethod
+    #inch
+    def rain_measure(bytes_vals):
+        return ( bytes_vals[7] * 256+bytes_vals[8]) * 0.0039336492890995264
+
+
+
+
     def __process_msg(self):
         bytes_vals = []
         for i in range(0, NUM_BITS, 8):
@@ -105,6 +138,10 @@ class sainlogic_decode(gr.sync_block):
 
         print(bytes_vals)
         if crc8(bytes_vals[:-1]) == bytes_vals[-1]:
-            print({'humidity': bytes_vals[11], 'wind_dir': bytes_vals[6], })
+            print({'temp': sainlogic_decode.get_temperature(bytes_vals),
+                   'humidity': bytes_vals[11],
+                   'wind_dir': sainlogic_decode.get_direction(bytes_vals),
+                   'avr_wind': sainlogic_decode.get_avr_wind(bytes_vals),
+                   'gust_wind': sainlogic_decode.get_gust_wind(bytes_vals) })
         else:
             print('CRC Failure')
