@@ -26,6 +26,7 @@
 
 // Define DEBUG_SAMPLER to log data packets to serial
 // Instead of normal operation
+#define DEBUG_SAMPLER
 
 // MQTT Broker to connect to
 const char* mqtt_server = "192.168.1.110";
@@ -37,8 +38,6 @@ PubSubClient client(wifi_client);
 ESP8266Timer ITimer;
 
 BinaryPpmTracker tracker(MIN_SAMPLES, MAX_SAMPLES);
-
-int last_count = 0;
 
 // setup WiFi based on ssid and password
 // defined in gitignored secrets.h
@@ -93,7 +92,7 @@ void reconnect() {
 }
 
 
-// Setup pins, serial, Wifi, and MQTT
+// Setup pins, serial, timer ISR, Wifi, and MQTT
 void setup() {
   pinMode(PIN_IN1, INPUT);
   pinMode(PIN_IN2, INPUT);
@@ -106,8 +105,6 @@ void setup() {
   //client.setSocketTimeout(0xFFFF);
   client.setKeepAlive(0xFFFF);
 
-  // Interval in microsecs
-  // Be sure to place this HW Timer well ahead blocking calls, because it needs to be initialized.
   if (ITimer.attachInterruptInterval(SAMPLE_PERIOD_US, sample_input))
     Serial.println("Starting  ITimer OK, millis() = " + String(millis()));
   else
@@ -115,23 +112,28 @@ void setup() {
 }
 
 #ifdef DEBUG_SAMPLER
-// When debugging, log bit sequence following PIN_IN1 going low
+// When debugging, log bit sequence following sample going low
 void debug_loop() {
-  size_t buffered_len = num_samples();
   static bool sent = true;
-  if (sent && !digitalRead(PIN_IN1)) {
-    sent = false;
-    reset_sampler();
-  }
+  size_t buffered_len = num_samples();
   if (sent) {
+    for (size_t i = 0; i < buffered_len; i++) {
+      if (!get_next_sample()) {
+        sent = false;
+        start_sample_capture();
+        break;
+      }
+    }
+    reset_sampler();
     return;
   }
-  if (buffered_len == SAMPLE_LEN) {
+  if (buffered_len == SAMPLE_LEN - 1) {
     sent = true;
     for (int i = 0; i < SAMPLE_LEN/8; i++){
       Serial.printf("%02X", get_sample_buffer()[i]);
     }
     Serial.print("\n");
+    reset_sampler();
   }
 }
 #endif
@@ -150,10 +152,12 @@ void loop() {
     // Demodulate PPM signal
     tracker.process_sample(get_next_sample());
 
-    if (last_count > 0 && tracker.cur_rx_len() == 0) {
-      Serial.printf("%d\n", last_count);
-    }
-    last_count = tracker.cur_rx_len();
+    // // Used for debugging
+    // size_t last_count = 0;
+    // if (last_count > 0 && tracker.cur_rx_len() == 0) {
+    //   Serial.printf("%lu %u\n", millis(), last_count);
+    // }
+    // last_count = tracker.cur_rx_len();
 
     // If full message is received publish it and reset tracker
     if (tracker.cur_rx_len() == MSG_LEN) {

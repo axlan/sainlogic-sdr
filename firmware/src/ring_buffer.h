@@ -13,10 +13,10 @@ size_t num_samples();
 
 bool get_next_sample();
 
-bool reset_sampler();
+void reset_sampler();
 
-#ifdef DEBUG_SAMPLER
+void start_sample_capture();
+
 const uint8_t *get_sample_buffer();
-#endif
 
 #endif

@@ -21,27 +21,26 @@ class BinaryPpmTracker {
       return;
     }
     if (sample != last_sample_) {
-      if (repetitions_ > min_samples_) {
+      if (repetitions_ > max_samples_ && repetitions_ < max_samples_ * 2) {
+        if (edge_) {
+          set_bit(!last_sample_);
+          cur_idx_++;
+        } else {
+          reset();
+        }
+      }
+      else if (repetitions_ > min_samples_) {
         if (!edge_) {
-            set_bit();
+            set_bit(last_sample_);
             cur_idx_++;
         }
         edge_ = !edge_;
-        repetitions_ = 0;
       } else {
         reset();
       }
+      repetitions_ = 0;
     } else {
       repetitions_++;
-      if (cur_idx_ > 0 && repetitions_ > max_samples_) {
-        if (!edge_) {
-            reset();
-        }
-        else {
-          edge_ = false;
-          repetitions_ = 0;
-        }
-      }
     }
     last_sample_ = sample;
   }
@@ -54,7 +53,7 @@ class BinaryPpmTracker {
   }
 
   // Number of bits received in current burst
-  int cur_rx_len() const {
+  size_t cur_rx_len() const {
     return cur_idx_;
   }
 
@@ -65,10 +64,10 @@ class BinaryPpmTracker {
 
  private:
 
-  void set_bit() {
+  void set_bit(bool value) {
     int bit_idx = 7 - cur_idx_ % 8;
     int byte_idx = cur_idx_ / 8;
-    bitWrite(rx_data_[byte_idx], bit_idx, last_sample_);
+    bitWrite(rx_data_[byte_idx], bit_idx, value);
   }
 
   const size_t min_samples_;
