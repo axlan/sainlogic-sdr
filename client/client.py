@@ -3,35 +3,12 @@ import struct
 
 import paho.mqtt.client as mqtt
 
-from calc_crc import crc8
+import sys  
+sys.path.insert(0, '/home/axlan/src/sainlogic-sdr/gr-sainlogic/python')
 
-fd = open('data.bin' ,'wb')
+from sainlogic_parser import get_measurements
 
-#deg
-def get_direction(bytes_vals):
-    dir = bytes_vals[6]
-    if bytes_vals[3] & 0b100:
-        dir += 256
-    return dir
-
-#F
-def get_temperature(bytes_vals):
-    return (bytes_vals[9] * 256 + bytes_vals[10] - 33168 ) / 10.
-
-WIND_CONV_FACTOR = 0.224
-
-#MPH
-def get_avr_wind(bytes_vals):
-    return bytes_vals[4] * 0.224
-
-#MPH
-def get_gust_wind(bytes_vals):
-    return bytes_vals[5] * 0.224
-
-#inch
-def rain_measure(bytes_vals):
-    return ( bytes_vals[7] * 256+bytes_vals[8]) * 0.0039336
-
+fd = open('out/data.bin' ,'wb')
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -48,18 +25,11 @@ def on_message(client, userdata, msg):
     parsed = struct.unpack('16B', data)
     print(parsed)
     fd.write(data)
-    if crc8(data[:-1]) == data[-1]:
-        print(datetime.now() ,{'temp': get_temperature(data),
-                'humidity': data[11],
-                'wind_dir': get_direction(data),
-                'avr_wind': get_avr_wind(data),
-                'gust_wind': get_gust_wind(data),
-                'rain': rain_measure(data),
-                 })
+    measurements = get_measurements(parsed)
+    if measurements is not None:
+        print(datetime.now() ,measurements)
     else:
         print(datetime.now() ,'CRC Failure')
-
-
 
 client = mqtt.Client()
 client.on_connect = on_connect
