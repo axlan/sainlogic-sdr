@@ -112,7 +112,11 @@ void setup() {
 }
 
 #ifdef DEBUG_SAMPLER
-// When debugging, log bit sequence following sample going low
+/**
+ * When debugging, log bit sequence following PIN_IN1 going low
+ * DEBUG_SAMPLER causes sampler to capture a full buffers worth
+ * after reset_sampler call. Last bit is not valid.
+ */
 void debug_loop() {
   static bool sent = true;
   if (sent) {

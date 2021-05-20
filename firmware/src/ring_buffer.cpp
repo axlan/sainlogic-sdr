@@ -12,6 +12,7 @@ void set_sample_pin(uint8_t pin) {
 void ICACHE_RAM_ATTR sample_input()
 {
   #ifdef DEBUG_SAMPLER
+  // Stop at SAMPLE_LEN - 1 since num_samples wraps around
   if (samples_head == SAMPLE_LEN - 1) {
     return;
   }
