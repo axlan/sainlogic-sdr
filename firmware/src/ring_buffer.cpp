@@ -4,22 +4,18 @@ uint8_t samples[SAMPLE_LEN/8];
 volatile size_t samples_head=0;
 volatile uint8_t sample_pin=0;
 size_t samples_tail=0;
-bool capture = false;
 
 void set_sample_pin(uint8_t pin) {
   sample_pin = pin;
 }
 
-void start_sample_capture() {
-  capture = true;
-  samples_tail = 0;
-}
-
 void ICACHE_RAM_ATTR sample_input()
 {
-  if (capture && samples_head == SAMPLE_LEN - 1) {
+  #ifdef DEBUG_SAMPLER
+  if (samples_head == SAMPLE_LEN - 1) {
     return;
   }
+  #endif
   int bit_idx = samples_head % 8;
   int byte_idx = samples_head / 8;
   bitWrite(samples[byte_idx], bit_idx, digitalRead(sample_pin));
@@ -50,7 +46,6 @@ void reset_sampler() {
   samples_head = 0;
   interrupts();
   samples_tail = 0;
-  capture = false;
 }
 
 const uint8_t *get_sample_buffer() {

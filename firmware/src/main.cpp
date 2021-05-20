@@ -8,6 +8,10 @@
 #include "ppm_tracker.h"
 #include "secrets.h"
 
+// Define DEBUG_SAMPLER to log data packets to serial
+// Instead of normal operation
+
+
 // D1 GPIO5
 // Connects to pin that goes low during receive
 #define PIN_IN1 5
@@ -23,10 +27,6 @@
 // Parameters for synching data
 #define MIN_SAMPLES 4
 #define MAX_SAMPLES 16
-
-// Define DEBUG_SAMPLER to log data packets to serial
-// Instead of normal operation
-#define DEBUG_SAMPLER
 
 // MQTT Broker to connect to
 const char* mqtt_server = "192.168.1.110";
@@ -115,18 +115,14 @@ void setup() {
 // When debugging, log bit sequence following sample going low
 void debug_loop() {
   static bool sent = true;
-  size_t buffered_len = num_samples();
   if (sent) {
-    for (size_t i = 0; i < buffered_len; i++) {
-      if (!get_next_sample()) {
-        sent = false;
-        start_sample_capture();
-        break;
-      }
+    if (!digitalRead(PIN_IN1)) {
+      reset_sampler();
+      sent = false;
     }
-    reset_sampler();
     return;
   }
+  size_t buffered_len = num_samples();
   if (buffered_len == SAMPLE_LEN - 1) {
     sent = true;
     for (int i = 0; i < SAMPLE_LEN/8; i++){

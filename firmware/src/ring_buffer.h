@@ -15,8 +15,8 @@ bool get_next_sample();
 
 void reset_sampler();
 
-void start_sample_capture();
-
+#ifdef DEBUG_SAMPLER
 const uint8_t *get_sample_buffer();
+#endif
 
 #endif
