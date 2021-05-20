@@ -21,24 +21,30 @@ class BinaryPpmTracker {
       return;
     }
     if (sample != last_sample_) {
+      bool lost = true;
+      bool found = false;
       if (repetitions_ > max_samples_ && repetitions_ < max_samples_ * 2) {
         if (edge_) {
-          set_bit(!last_sample_);
-          cur_idx_++;
-        } else {
-          reset();
+          found = true;
         }
-      }
-      else if (repetitions_ > min_samples_) {
+      } else if ((cur_idx_ != 0 or last_sample_) and repetitions_ < max_samples_ and repetitions_ > min_samples_) {
+        lost = false;
         if (!edge_) {
-            set_bit(last_sample_);
-            cur_idx_++;
+          found = true;
         }
         edge_ = !edge_;
-      } else {
-        reset();
       }
       repetitions_ = 0;
+      if (found) {
+        if (cur_idx_ == 9 && sample) {
+          set_bit(true);
+          cur_idx_++;
+        }
+        set_bit(last_sample_);
+        cur_idx_++;
+      } else if (lost) {
+        reset();
+      }
     } else {
       repetitions_++;
     }
