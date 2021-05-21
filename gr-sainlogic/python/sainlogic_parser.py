@@ -79,5 +79,6 @@ def get_measurements(msg):
             'humidity': get_humidity(msg),
             'wind_dir': get_direction(msg),
             'avr_wind': get_avr_wind_speed(msg),
-            'gust_wind': get_gust_wind_speed(msg)
+            'gust_wind': get_gust_wind_speed(msg),
+            'rain': get_rain(msg)
            }

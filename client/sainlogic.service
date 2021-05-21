@@ -1,0 +1,12 @@
+[Unit]
+Description=Log Sainlogic weather sensor to file and Weather Underground
+After=network.target
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=axlan
+ExecStart=/home/axlan/src/sainlogic-sdr/client/run.sh
+
+[Install]
+WantedBy=multi-user.target

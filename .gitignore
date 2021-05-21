@@ -1,6 +1,7 @@
 out/
 reveng-2.1.1/
 top_block.py
+client/run.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
