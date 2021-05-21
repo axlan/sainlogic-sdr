@@ -1,5 +1,6 @@
 from datetime import datetime
 import struct
+import time
 
 import paho.mqtt.client as mqtt
 
@@ -8,7 +9,8 @@ sys.path.insert(0, '/home/axlan/src/sainlogic-sdr/gr-sainlogic/python')
 
 from sainlogic_parser import get_measurements
 
-fd = open('out/data.bin' ,'wb')
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+fd = open(f'out/sainlog_log_{timestamp}.bin' ,'wb')
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -23,8 +25,9 @@ def on_message(client, userdata, msg):
     data = msg.payload
     # print(msg.topic+" "+str(msg.payload))
     parsed = struct.unpack('16B', data)
-    print(parsed)
+    data = struct.pack('I', int(time.time())) + data
     fd.write(data)
+    fd.flush()
     measurements = get_measurements(parsed)
     if measurements is not None:
         print(datetime.now() ,measurements)
