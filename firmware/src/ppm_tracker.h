@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #define MSG_LEN 128
+#define MSG_BYTES 16
 
 // Class tracking pulse position modulated signal
 class BinaryPpmTracker {

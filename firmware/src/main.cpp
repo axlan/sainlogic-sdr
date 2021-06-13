@@ -6,6 +6,7 @@
 
 #include "ring_buffer.h"
 #include "ppm_tracker.h"
+#include "data_decode.h"
 #include "secrets.h"
 
 // Define DEBUG_SAMPLER to log data packets to serial
@@ -138,6 +139,23 @@ void debug_loop() {
 }
 #endif
 
+void decode_and_publish(const uint8_t *msg) {
+  if (check_crc(tracker.get_msg())) {
+    String json_data = "{";
+    json_data += String("\"temp_f\": ") + String(get_temperature(msg)) + ", ";
+    json_data += String("\"humidity_%\": ") + String(get_humidity(msg)) + ", ";
+    json_data += String("\"wind_dir_deg\": ") + String(get_direction(msg)) + ", ";
+    json_data += String("\"avr_wind_m/s\": ") + String(get_avr_wind_speed(msg)) + ", ";
+    json_data += String("\"gust_wind_m/s\": ") + String(get_gust_wind_speed(msg)) + ", ";
+    json_data += String("\"rain_mm\": ") + String(get_rain(msg));
+    json_data += "}";
+    Serial.print(json_data);
+    Serial.print('\n');
+    client.publish("weather_decoded", json_data.c_str(), json_data.length());
+  }
+  Serial.print("CRC check failed\n");
+}
+
 void loop() {
   #ifdef DEBUG_SAMPLER
   debug_loop();
@@ -161,7 +179,7 @@ void loop() {
 
     // If full message is received publish it and reset tracker
     if (tracker.cur_rx_len() == MSG_LEN) {
-      for (int i = 0; i < MSG_LEN/8; i++){
+      for (int i = 0; i < MSG_BYTES; i++){
         Serial.printf("%02X", tracker.get_msg()[i]);
       }
       Serial.print("\n");
@@ -169,7 +187,8 @@ void loop() {
       if (!client.connected()) {
         reconnect();
       }
-      client.publish("weather_data", tracker.get_msg(), MSG_LEN/8);
+      client.publish("weather_data", tracker.get_msg(), MSG_BYTES);
+      decode_and_publish(tracker.get_msg());
       client.loop();
       reset_sampler();
       tracker.reset();
